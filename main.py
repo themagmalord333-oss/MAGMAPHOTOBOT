@@ -8,7 +8,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 # --- CONFIGURATION ---
-TOKEN = "8519141404:AAG96ys2oHdO5jxnJNwOhFrmhtP9IpVPOoc"
+TOKEN = "8519141404:AAE7yLTB6rZ0rjOW3HIkm5IT5tlVRulSGAk"
 # Render ka URL
 SERVER_URL = "https://magmaphotobot-2.onrender.com"
 
